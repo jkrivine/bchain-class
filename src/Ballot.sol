@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 ///@title Voting contract that refunds voters for their gas processing costs.
+///@dev This code is for pedagogical purpose and contains vulnerabilities. Do not use for anything else than teachning!
+
 contract Ballot {
     enum Vote {
       ABS, // Abstain
