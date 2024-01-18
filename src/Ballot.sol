@@ -26,6 +26,15 @@ contract Ballot {
     ///@notice Event emitted when the admin is changed.
     event SetAdmin(address);
 
+    ///@notice Event emitted when a vote is opened.
+    event OpenVote(uint bounty, address[] whitelist);
+
+    ///@notice Event emitted when a vote is cast.
+    event LogVote(address voter, uint voterId, Vote t);
+
+    ///@notice Event emitted when a vote is closed.
+    event CloseVote(Vote winningVote);
+
     ///@notice Constructor that sets the admin to the deployer.
     constructor () {
       admin = msg.sender;
@@ -55,6 +64,7 @@ contract Ballot {
       for (uint i; i<whitelist_.length; i++) {
         whitelist[i] = whitelist_[i];
       }
+      emit OpenVote(bounty, whitelist_);
     }
 
     ///@notice Function to get the id of a voter.
@@ -83,6 +93,7 @@ contract Ballot {
       votes[Vote.NO] = 0;
       votes[Vote.ABS] = 0;
       refundPerVote = 0;
+      emit CloseVote(winningVote);
     }
 
     ///@notice Function to vote.
@@ -95,6 +106,7 @@ contract Ballot {
       require(success, "Ballot/CouldNotRefundVoter");
       votes[t]++;
       whitelist[voterId] = address(0);
+      emit LogVote(msg.sender, voterId, t);
     }
 
 }

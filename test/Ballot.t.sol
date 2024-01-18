@@ -6,6 +6,9 @@ import {Ballot} from "../src/Ballot.sol";
 
 contract BallotTest is Test {
     Ballot public ballot;
+    event OpenVote(uint bounty, address[] whitelist);
+    event LogVote(address voter, uint voterId, Ballot.Vote t);
+    event CloseVote(Ballot.Vote winningVote);
 
     receive() external virtual payable {}
 
@@ -15,6 +18,10 @@ contract BallotTest is Test {
         participants[0] = address(this);
         participants[1] = vm.addr(1);
         participants[2] = vm.addr(2);
+        
+        vm.expectEmit(true, true, true, true);
+        emit OpenVote(0.01 ether, participants);
+
         ballot.open{value:1 ether}(0.01 ether, participants);
     }
 
@@ -23,6 +30,8 @@ contract BallotTest is Test {
         address voter2 = vm.addr(2);
 
         // this votes YES
+        vm.expectEmit(true, true, true, true);
+        emit LogVote(address(this), 0, Ballot.Vote.YES);
         ballot.vote(0, Ballot.Vote.YES);
 
         uint bal_before = voter1.balance;
@@ -35,11 +44,11 @@ contract BallotTest is Test {
         
         assertEq(ballot.votes(Ballot.Vote.YES), 1);
         assertTrue(ballot.whitelist(0)==address(0));
-    }
 
-    function test_closeVote() public {
-        ballot.closeVote();
-        assertEq(ballot.refundPerVote(), 0);
-        assertEq(ballot.participants(), 0);
+        vm.expectEmit(true, true, true, true);
+        emit CloseVote(Ballot.Vote.ABS);
+
+        Ballot.Vote winningVote = ballot.closeVote();
+        assertEq(uint(winningVote), uint(Ballot.Vote.ABS));
     }
 }
