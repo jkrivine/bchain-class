@@ -9,6 +9,7 @@ contract Ballot {
         ABS, // Abstain
         YES, // YES
         NO // NO
+
     }
 
     ///@notice Mapping of votes to their count.
@@ -48,7 +49,8 @@ contract Ballot {
     ///@notice Function to change the admin of the contract.
     ///@param admin_ Address of the new admin.
     function setAdmin(address admin_) external {
-        require(admin_ != admin && admin != address(0), "Ballot/InvalidAdmin");
+        require(msg.sender == admin, "Ballot/Unauthorized");
+        require(admin_ != admin && admin_ != address(0), "Ballot/InvalidAdmin");
         admin = admin_;
         emit SetAdmin(admin_);
     }
@@ -84,8 +86,6 @@ contract Ballot {
     ///@dev Refunds the admin for their gas processing costs.
     function closeVote() external returns (Vote winningVote) {
         require(msg.sender == admin, "Ballot/Unauthorized");
-        (bool success,) = admin.call{value: address(this).balance}("");
-        require(success, "Ballot/FailedToWithdraw");
         whitelist = new address[](0);
         winningVote =
             votes[Vote.YES] > votes[Vote.NO] ? Vote.YES : votes[Vote.YES] < votes[Vote.NO] ? Vote.NO : Vote.ABS;
@@ -95,6 +95,9 @@ contract Ballot {
         votes[Vote.ABS] = 0;
         refundPerVote = 0;
         emit CloseVote(winningVote);
+
+        (bool success,) = admin.call{value: address(this).balance}("");
+        require(success, "Ballot/FailedToWithdraw");
     }
 
     ///@notice Function to vote.
